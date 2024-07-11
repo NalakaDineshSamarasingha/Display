@@ -1,26 +1,13 @@
+// main.cpp
+
 #include <Arduino.h>
-
 #include <esp32_smartdisplay.h>
-#include <ui/ui.h>
-
+#include "ui.h" // Ensure this path is correct relative to your project structure
 #include <src/extra/libs/qrcode/lv_qrcode.h>
+#include <WiFi.h>
+#include <HTTPClient.h>
 
-void OnAddOneClicked(lv_event_t *e)
-{
-    static uint8_t cnt = 0;
-    cnt++;
-    lv_label_set_text_fmt(ui_lblCountValue, "%d", cnt);
-}
-
-void OnRotateClicked(lv_event_t *e)
-{
-    auto disp = lv_disp_get_default();
-    auto rotation = (lv_disp_rot_t)((lv_disp_get_rotation(disp) + 1) % (LV_DISP_ROT_270 + 1));
-    lv_disp_set_rotation(disp, rotation);
-}
-
-void setup()
-{
+void setup() {
 #ifdef ARDUINO_USB_CDC_ON_BOOT
     delay(5000);
 #endif
@@ -33,45 +20,10 @@ void setup()
     log_i("SDK version: %s", ESP.getSdkVersion());
 
     smartdisplay_init();
-
-    __attribute__((unused)) auto disp = lv_disp_get_default();
-    // lv_disp_set_rotation(disp, LV_DISP_ROT_90);
-    // lv_disp_set_rotation(disp, LV_DISP_ROT_180);
-    // lv_disp_set_rotation(disp, LV_DISP_ROT_270);
-
-    ui_init();
-
-    // To use third party libraries, enable the define in lv_conf.h: #define LV_USE_QRCODE 1
-    auto ui_qrcode = lv_qrcode_create(ui_scrMain, 100, lv_color_black(), lv_color_white());
-    const char *qr_data = "https://github.com/rzeldent/esp32-smartdisplay";
-    lv_qrcode_update(ui_qrcode, qr_data, strlen(qr_data));
-    lv_obj_center(ui_qrcode);
+    ui_init();  // Initialize the UI
 }
 
-ulong next_millis;
-
-void loop()
-{
-    auto const now = millis();
-    if (now > next_millis)
-    {
-        next_millis = now + 500;
-
-        char text_buffer[32];
-        sprintf(text_buffer, "%lu", now);
-        lv_label_set_text(ui_lblMillisecondsValue, text_buffer);
-
-#ifdef BOARD_HAS_RGB_LED
-        auto const rgb = (now / 2000) % 8;
-        smartdisplay_led_set_rgb(rgb & 0x01, rgb & 0x02, rgb & 0x04);
-#endif
-
-#ifdef BOARD_HAS_CDS
-        auto cdr = analogReadMilliVolts(CDS);
-        sprintf(text_buffer, "%d", cdr);
-        lv_label_set_text(ui_lblCdrValue, text_buffer);
-#endif
-    }
-
+void loop() {
     lv_timer_handler();
+    delay(5);  // Small delay to let the CPU rest a bit
 }
